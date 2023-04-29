@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
@@ -7,22 +8,39 @@ using UnityEngine.UI;
 
 public class PlayerScript : MonoBehaviour {
 
-    internal List<KeyCode> dashKeys = new List<KeyCode>{KeyCode.LeftShift, KeyCode.JoystickButton0};
-    internal List<KeyCode> jumpKeys = new List<KeyCode>{KeyCode.W, KeyCode.Space, KeyCode.JoystickButton3};
-    internal List<KeyCode> diveKeys = new List<KeyCode>{KeyCode.S, KeyCode.LeftControl, KeyCode.JoystickButton8};
+    internal List<KeyCode> dashKeys = new List<KeyCode>{
+        KeyCode.LeftShift, KeyCode.JoystickButton0};
+    internal List<KeyCode> jumpKeys = new List<KeyCode>{
+        KeyCode.W, KeyCode.UpArrow, KeyCode.Space, KeyCode.JoystickButton3};
+    internal List<KeyCode> diveKeys = new List<KeyCode>{
+        KeyCode.S, KeyCode.DownArrow, KeyCode.LeftControl, KeyCode.JoystickButton8};
 
-    internal float walkSpeed = 10f;
+    internal float walkSpeed = 20f;
     protected float dashSpeed = 100f;
-    protected float jumpForce = 1000f;
-    protected float accelSpeed = 100f;
- 
-    void Start() {
-    }
+    protected float jumpForce = 1500f;
+    protected float accelSpeed = 10f;
+
+    private bool changingDirection => (
+        GetComponent<Rigidbody2D>().velocity.x > 0f && Input.GetAxis("Horizontal") < 0f)
+        || (GetComponent<Rigidbody2D>().velocity.x < 0f && Input.GetAxis("Horizontal") > 0f
+    );
 
     void Update() {
+        if (dead) return;
         var input = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
+
         UpdateJump(jumpKeys.Any(k => Input.GetKeyDown(k)));
         UpdateDive(diveKeys.Any(k => Input.GetKeyDown(k)));
+
+        // Continue full forward / reverse when diving
+        if (IsDiving()) {
+            if (GetComponent<Rigidbody2D>().velocity.x < 0) {
+                input = new Vector3(-1, 0, 0);
+            } else {
+                input = new Vector3(1, 0, 0);
+            }
+        }
+
         UpdateWalk(input);
         UpdateDash(dashKeys.Any(k => Input.GetKey(k)));
 
@@ -39,8 +57,37 @@ public class PlayerScript : MonoBehaviour {
         rc.velocity = new Vector3(walkVelocity.x, rc.velocity.y, walkVelocity.z);
     }
 
-    protected void UpdateDive(bool diving) {
-        // TODO
+
+    float diveTimer;
+    float diveMax = 1f;
+    protected void UpdateDive(bool startDive) {
+        if (IsDiving()){
+            diveTimer += Time.deltaTime;
+        } else if (startDive && InAir()){
+            Dive();
+        } 
+
+        // For now, dive simply times out
+        if (diveTimer > diveMax) diveTimer = 0;
+    }
+    internal void Dive() {
+        // Initiate Dive
+
+        // Cancel out y velocity when initiated
+        if (diveTimer == 0) {
+            var rc = GetComponent<Rigidbody2D>();
+            rc.velocity = new Vector2(rc.velocity.x, 0);
+        }
+        diveTimer += Time.deltaTime;
+        // TODO wish I could have this just be 'active when diving',
+        // but leaving for now
+        var diving = transform.Find("Effects/Diving").GetComponent<ParticleSystem>();
+        var main = diving.main;
+        if (!diving.isPlaying) main.duration = diveMax;
+        diving.Play();
+    }
+    internal bool IsDiving() {
+        return diveTimer > 0;
     }
 
     protected void UpdateDash(bool diving) {
@@ -57,6 +104,11 @@ public class PlayerScript : MonoBehaviour {
     void Jump() {
         GetComponent<Rigidbody2D>().AddForce(transform.up * jumpForce);
         jumpTimer = 1f; // Time before a grounded player can jump again
+
+        GetComponent<Animator>().SetTrigger("Jump");
+    }
+    public bool CanJump() {
+        return !InAir() && jumpTimer < 0.001f;
     }
 
     float coyoteMax = 0.2f;
@@ -81,8 +133,9 @@ public class PlayerScript : MonoBehaviour {
             coyoteTimer = coyoteTimer + Time.deltaTime;
         }
 
-        return coyoteTimer > coyoteMax || jumpTimer > 0;
+        return coyoteTimer > coyoteMax;
     }
+
     public Vector3 BottomPoint() {
         // Find a low point in the center, just above the ground, to use for
         // telling if we are airborne
@@ -98,12 +151,24 @@ public class PlayerScript : MonoBehaviour {
 
         Vector3 currentVelocity = prevVelocity + acceleration * Time.deltaTime; 
         prevVelocity = currentVelocity;
-        if (acceleration.magnitude < 0.001f) {
-            prevVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, 30 * Time.deltaTime); // Dampening    
+
+        // Player isn't adding input to run or jump
+        bool lowInput = acceleration.magnitude < 0.001f;
+
+        // Damening
+        if (!IsDiving() && (lowInput || changingDirection)) {
+            prevVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, 10 * Time.deltaTime);    
+
+            // Leave out y from dampening - is this right?
+            prevVelocity = new Vector3(prevVelocity.x, currentVelocity.y, prevVelocity.z);
+        }
+        
+        if (currentVelocity.magnitude > maxVelocity) {
+            return currentVelocity.normalized * maxVelocity;
+        } else if (lowInput && currentVelocity.magnitude < 0.001f) {
+            return Vector3.zero;
         }
 
-        if (currentVelocity.magnitude > maxVelocity) return currentVelocity.normalized * maxVelocity;
-        
         return currentVelocity;
     }
 
@@ -114,14 +179,57 @@ public class PlayerScript : MonoBehaviour {
         var speedRatio = Mathf.Abs(rc.velocity.x) / walkSpeed;
 
         var anim = GetComponent<Animator>();
-        anim.SetFloat("Speed", Mathf.Abs(rc.velocity.x));
+        anim.SetFloat("Speed", speedRatio);
+        anim.SetBool("Diving", IsDiving());
+        anim.SetBool("InAir", InAir());
+
         var t = transform.Find("Canvas/Speed Text").GetComponent<Text>();
         t.text = ""+Mathf.Round(rc.velocity.magnitude);
-        anim.speed = speedRatio * 2;
+
+        // When walking / runing, speed can vary
+        anim.speed = Mathf.Max(0.4f, speedRatio * 2);
+
+        // But not always
+        var staticSpeed = new List<string> { "jump"};
+        foreach (var name in staticSpeed) {
+            if (anim.GetCurrentAnimatorStateInfo(0).IsName(name)) anim.speed = 1;
+        }
 
         // Flip sprite
         GetComponent<SpriteRenderer>().flipX = rc.velocity.x < 0;
+
+        // Edit particles
+        var running = transform.Find("Effects/Running").GetComponent<ParticleSystem>();
+        var runningEms = running.emission;
+        runningEms.rateOverTime = 10 * speedRatio;
+        if (InAir()) runningEms.rateOverTime = 0;
+        running.startSpeed = 10 * speedRatio;
+
+        if (IsDiving()) {
+            GetComponent<SpriteRenderer>().color = HexColor("#00FFC7");
+        } else {
+            GetComponent<SpriteRenderer>().color = Color.white;
+        }
     }
 
+    bool dead = false;
+    public void Kill() {
+        // TODO kill message, restart, etc
+        Debug.Log("Dead");
+        dead = true;
 
+        GameObject.Find("/Dead Overlay").SetActive(true);
+        GetComponent<SpriteRenderer>().enabled = false;
+        var gib = transform.Find("Effects/Gib").GetComponent<ParticleSystem>();
+        gib.Play();
+    }
+
+    public Color HexColor(string hex) {
+        // Simple helper because I want to use hex colors
+        var hexStyle = System.Globalization.NumberStyles.HexNumber;
+        int red = int.Parse(hex.Substring(1, 2), hexStyle);
+        int green = int.Parse(hex.Substring(3, 2), hexStyle);
+        int blue = int.Parse(hex.Substring(5, 2), hexStyle);
+        return new Color(red, green, blue);
+    }
 }

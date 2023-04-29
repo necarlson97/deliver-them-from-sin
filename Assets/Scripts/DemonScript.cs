@@ -13,9 +13,17 @@ public class DemonScript : MonoBehaviour {
     }
 
     void FixedUpdate() {
+        if (speed == 0) return;
+        
         var tp = transform.position;
         var direction = new Vector3(speed, 0, 0);
         transform.position = Vector3.Lerp(tp, tp + direction, Time.fixedDeltaTime * speed);
+
+        // Cheaty little telleport
+        var ps = GameObject.FindObjectOfType<PlayerScript>();
+        if (Mathf.Abs(transform.position.x-ps.transform.position.x) > 200) {
+            transform.position = transform.position + new Vector3(10, 0, 0);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other) {

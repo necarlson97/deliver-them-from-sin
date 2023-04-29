@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 public class PlayerScript : MonoBehaviour {
 
+    // Prefab for 'game over' canvas overlay
+    public GameObject deadOverlay;
+
     internal List<KeyCode> dashKeys = new List<KeyCode>{
         KeyCode.LeftShift, KeyCode.JoystickButton0};
     internal List<KeyCode> jumpKeys = new List<KeyCode>{
@@ -99,7 +102,7 @@ public class PlayerScript : MonoBehaviour {
         // Check to see if the being wishes to jump,
         // and handle duplicate jumps, coyote jumps, etc
         jumpTimer -= Time.deltaTime;
-        if (jumped && !InAir()) Jump();
+        if (jumped && CanJump()) Jump();
     }
     void Jump() {
         GetComponent<Rigidbody2D>().AddForce(transform.up * jumpForce);
@@ -215,13 +218,27 @@ public class PlayerScript : MonoBehaviour {
     bool dead = false;
     public void Kill() {
         // TODO kill message, restart, etc
-        Debug.Log("Dead");
         dead = true;
 
-        GameObject.Find("/Dead Overlay").SetActive(true);
+        Instantiate(deadOverlay, Vector3.zero, Quaternion.identity);
         GetComponent<SpriteRenderer>().enabled = false;
+        GetComponent<Rigidbody2D>().isKinematic = true;
+        GetComponent<Rigidbody2D>().simulated = false;
         var gib = transform.Find("Effects/Gib").GetComponent<ParticleSystem>();
         gib.Play();
+    }
+
+    int babiesDelivered = 0;
+    public int Deposit() {
+        if (!CanDeposit()) return -1;
+        // We successsfully delivered a baby to it's destination
+        babiesDelivered++;
+        Destroy(transform.Find("Baby"));
+        return babiesDelivered;
+    }
+    public bool CanDeposit() {
+        // Do we have a baby to deliver?
+        return transform.Find("Baby") != null;
     }
 
     public Color HexColor(string hex) {

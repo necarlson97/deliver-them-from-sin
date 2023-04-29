@@ -15,24 +15,14 @@ public class BabyScript : MonoBehaviour {
         transform.Find("Collider").GetComponent<Collider2D>().enabled = false;
         GetComponent<Rigidbody2D>().isKinematic = true;
         GetComponent<Rigidbody2D>().simulated = false;
-        Debug.Log("Picked up");
 
         var ds = GameObject.FindObjectOfType<DemonScript>();
         ds.Awoken();
     }
 
     private void OnTriggerEnter2D(Collider2D other) {
-        Debug.Log("trigger "+other);
         if (other.gameObject.name == "Player") {
             PickedUp(other.gameObject);
         }
-
-        if (other.gameObject.name == "Chimney") {
-            DroppedOff();
-        }
-    }
-
-    void DroppedOff() {
-        // TODO
     }
 }

@@ -15,8 +15,9 @@ public class BabySpawnerScript : MonoBehaviour {
         if (other.gameObject.name == "Player") {
             // Spawn baby when player is near enough
             spawned = true;
-
-            Instantiate(babyPrefab, Vector3.zero, Quaternion.identity);
+            Debug.Log("Baby spawned");
+            var b = Instantiate(babyPrefab, transform.position, Quaternion.identity, transform);
+            b.name = "Baby";
         }
     }
 }

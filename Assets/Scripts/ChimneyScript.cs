@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class ChimneyScript : MonoBehaviour {
     private void OnTriggerEnter2D(Collider2D other) {
+
         if (other.gameObject.name == "Player") {
             int deposited = other.GetComponent<PlayerScript>().Deposit();
-
             // If it was unsuccessful
             if (deposited == -1) return;
 
@@ -18,7 +18,7 @@ public class ChimneyScript : MonoBehaviour {
             smoke.Stop();
 
             var confetti = transform.Find("Confetti").GetComponent<ParticleSystem>();
-            smoke.Play();
+            confetti.Play();
         }
     }
 }

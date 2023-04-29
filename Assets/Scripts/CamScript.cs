@@ -10,7 +10,7 @@ public class CamScript : MonoBehaviour {
     Vector3 start;
 
     float fastZoom = 20;
-    float startZoom = 5;
+    float startZoom = 8;
 
     public float ratio;
 
@@ -23,6 +23,7 @@ public class CamScript : MonoBehaviour {
         PlayerSpeed();
         CloseToStart();
         CloseToDemon();
+        UpdateShake();
     }
 
     void PlayerSpeed() {
@@ -34,9 +35,9 @@ public class CamScript : MonoBehaviour {
 
         // Slow to speed up, fast to slow down
         if (ratio < speedRatio) {
-            ratio = Mathf.Lerp(ratio, speedRatio, 0.02f);
+            ratio = Mathf.Lerp(ratio, speedRatio, 0.005f);
         } else {
-            ratio = Mathf.Lerp(ratio, speedRatio, 0.1f);
+            ratio = Mathf.Lerp(ratio, speedRatio, 0.02f);
         }
     
         ratio = Mathf.Min(1, Mathf.Max(0, ratio));
@@ -46,7 +47,7 @@ public class CamScript : MonoBehaviour {
 
     void CloseToStart() {
         // zoom out as player walks away from origin
-        var distance = transform.position.magnitude / 100f;
+        var distance = transform.position.magnitude / 200f;
         distance = Mathf.Min(1, Mathf.Max(0, distance));
         GetComponent<Camera>().orthographicSize = Mathf.Lerp(startZoom, fastZoom, distance);
     }
@@ -56,6 +57,8 @@ public class CamScript : MonoBehaviour {
         var ps = GameObject.FindObjectOfType<PlayerScript>();
         var distance = Vector2.Distance(ds.transform.position, ps.transform.position);
 
+        if (distance < 20) Shake(distance / 20f);    
+
         distance = distance / 40f;
         distance = Mathf.Min(1, Mathf.Max(0, distance));
         var sr = GetComponentInChildren<SpriteRenderer>();
@@ -63,6 +66,18 @@ public class CamScript : MonoBehaviour {
         tmp.a = 1f - distance;
         sr.color = tmp;
 
-        // TODO camera shake as well
+
+    }
+
+    float shakeTimer = 0;
+    public void Shake(float shakeTime) {
+        shakeTimer = shakeTime;
+
+    }
+    void UpdateShake() {
+        if (shakeTimer < 0) return;
+        shakeTimer -= Time.fixedDeltaTime;
+        var shakeAmount = shakeTimer;
+        transform.localPosition += Random.insideUnitSphere * shakeAmount;
     }
 }

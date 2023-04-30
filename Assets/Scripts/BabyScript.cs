@@ -11,10 +11,10 @@ public class BabyScript : MonoBehaviour {
         transform.localPosition = new Vector3(-.4f, .4f, 5);
         GetComponent<SpriteRenderer>().flipX = true;
 
-        // GetComponent<Collider2D>().enabled = false;
         transform.Find("Collider").GetComponent<Collider2D>().enabled = false;
         GetComponent<Rigidbody2D>().isKinematic = true;
         GetComponent<Rigidbody2D>().simulated = false;
+        GetComponent<SpriteRenderer>().enabled = false;
 
         var ds = GameObject.FindObjectOfType<DemonScript>();
         ds.Awoken();

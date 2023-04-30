@@ -12,11 +12,11 @@ public class PlayerScript : MonoBehaviour {
     public GameObject deadOverlay;
 
     internal List<KeyCode> punchKeys = new List<KeyCode>{
-        KeyCode.Space, KeyCode.JoystickButton0};
+        KeyCode.Space, KeyCode.JoystickButton1};
     internal List<KeyCode> jumpKeys = new List<KeyCode>{
-        KeyCode.W, KeyCode.UpArrow, KeyCode.JoystickButton3};
+        KeyCode.W, KeyCode.UpArrow, KeyCode.JoystickButton0};
     internal List<KeyCode> diveKeys = new List<KeyCode>{
-        KeyCode.S, KeyCode.DownArrow, KeyCode.JoystickButton8};
+        KeyCode.S, KeyCode.DownArrow, KeyCode.JoystickButton2};
 
     internal float walkSpeed = 20f;
     protected float jumpForce = 1500f;
@@ -157,6 +157,8 @@ public class PlayerScript : MonoBehaviour {
         var main = punching.main;
         if (!punching.isPlaying) main.duration = punchMax;
         punching.Play();
+
+        GameObject.FindObjectOfType<CamScript>().Shake(.2f);
     }
     internal bool IsPunching() {
         return punchTimer > 0;
@@ -231,12 +233,18 @@ public class PlayerScript : MonoBehaviour {
         var rc = GetComponent<Rigidbody2D>();
         var speedRatio = Mathf.Abs(rc.velocity.x) / walkSpeed;
 
+        // Animation params
         var anim = GetComponent<Animator>();
         anim.SetFloat("Speed", speedRatio);
         anim.SetBool("Diving", IsDiving());
         anim.SetBool("Punching", IsPunching());
         anim.SetBool("InAir", InAir());
 
+        // Animation layer
+        // (if they have the baby, thats layer idx 1)
+        if (CanDeposit())  anim.SetLayerWeight (1, 1f);
+        else anim.SetLayerWeight (1, 0f);
+    
         // SFX
         if (IsDiving()) GetComponent<PlayerAudioScript>().Dive();
         else if (IsPunching()) GetComponent<PlayerAudioScript>().Punch();

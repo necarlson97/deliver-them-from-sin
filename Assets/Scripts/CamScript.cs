@@ -9,7 +9,7 @@ public class CamScript : MonoBehaviour {
     Vector3 fast = new Vector3(20, 0, -10);
     Vector3 start;
 
-    float fastZoom = 20;
+    float fastZoom = 16;
     float startZoom = 8;
 
     public float ratio;
@@ -65,7 +65,7 @@ public class CamScript : MonoBehaviour {
         if (distance < 20) Shake(distance / 20f);    
 
         distance = distance / 40f;
-        distance = Mathf.Min(1, Mathf.Max(0, distance));
+        distance = Mathf.Min(1, Mathf.Max(.9f, distance));
         var sr = GetComponentInChildren<SpriteRenderer>();
         var tmp = Color.red;
         tmp.a = 1f - distance;

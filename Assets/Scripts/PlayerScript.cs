@@ -174,6 +174,7 @@ public class PlayerScript : MonoBehaviour {
         jumpTimer = 1f; // Time before a grounded player can jump again
 
         GetComponent<Animator>().SetTrigger("Jump");
+        GetComponent<PlayerAudioScript>().Jump();
     }
     public bool CanJump() {
         return !IsPunching() && !IsDiving() && !InAir() && jumpTimer < 0.001f;
@@ -224,6 +225,11 @@ public class PlayerScript : MonoBehaviour {
         anim.SetBool("Punching", IsPunching());
         anim.SetBool("InAir", InAir());
 
+        // SFX
+        if (IsDiving()) GetComponent<PlayerAudioScript>().Dive();
+        else if (IsPunching()) GetComponent<PlayerAudioScript>().Punch();
+        else if (speedRatio > 0.8 && !InAir()) GetComponent<PlayerAudioScript>().Step();
+
         var speedText = transform.Find("Canvas/Speed Text");
         if (speedText != null) {
             var t = speedText.GetComponent<Text>();
@@ -268,6 +274,7 @@ public class PlayerScript : MonoBehaviour {
         GetComponent<Rigidbody2D>().simulated = false;
         var gib = transform.Find("Effects/Gib").GetComponent<ParticleSystem>();
         gib.Play();
+        GetComponent<PlayerAudioScript>().Death();
     }
 
     public void Win() {

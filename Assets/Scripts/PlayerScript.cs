@@ -31,7 +31,10 @@ public class PlayerScript : MonoBehaviour {
     public int boxesBroken = 0;
 
     void Update() {
-        if (dead) return;
+        if (dead) {
+            UpdateWalk(Vector3.zero);
+            return;
+        }
         var input = new Vector3(Input.GetAxis("Horizontal"), 0, 0);
         var rc = GetComponent<Rigidbody2D>();
 
@@ -221,8 +224,12 @@ public class PlayerScript : MonoBehaviour {
         anim.SetBool("Punching", IsPunching());
         anim.SetBool("InAir", InAir());
 
-        var t = transform.Find("Canvas/Speed Text").GetComponent<Text>();
-        t.text = ""+Mathf.Abs(Mathf.Round(rc.velocity.x));
+        var speedText = transform.Find("Canvas/Speed Text");
+        if (speedText != null) {
+            var t = speedText.GetComponent<Text>();
+            t.text = ""+Mathf.Abs(Mathf.Round(rc.velocity.x));    
+        }
+        
 
         // When walking / runing, speed can vary
         anim.speed = Mathf.Max(0.4f, speedRatio * 2);
@@ -252,7 +259,6 @@ public class PlayerScript : MonoBehaviour {
 
     bool dead = false;
     public void Kill() {
-        // TODO kill message, restart, etc
         if (dead) return;
         dead = true;
 
@@ -262,6 +268,14 @@ public class PlayerScript : MonoBehaviour {
         GetComponent<Rigidbody2D>().simulated = false;
         var gib = transform.Find("Effects/Gib").GetComponent<ParticleSystem>();
         gib.Play();
+    }
+
+    public void Win() {
+        if (dead) return;
+        dead = true;
+
+        var overlay = Instantiate(deadOverlay, Vector3.zero, Quaternion.identity);
+        overlay.GetComponent<DeadOverlayScript>().Success();
     }
 
     public int babiesDelivered = 0;

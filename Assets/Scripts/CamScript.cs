@@ -17,6 +17,8 @@ public class CamScript : MonoBehaviour {
     void Start() {
         start = transform.localPosition;
         // startZoom = GetComponent<Camera>().orthographicSize;
+
+        // TODO slow fade in?
     }
 
     void FixedUpdate() {

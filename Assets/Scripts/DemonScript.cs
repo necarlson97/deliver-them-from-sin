@@ -12,7 +12,11 @@ public class DemonScript : MonoBehaviour {
         if (speed > 0) return;
         speed = speedMax;
         var cs = GameObject.FindObjectOfType<CamScript>();
-        cs.Shake(2f);
+        cs.Shake(1.5f);
+    }
+
+    public void Stopped() {
+        speed = 0;
     }
 
     void FixedUpdate() {

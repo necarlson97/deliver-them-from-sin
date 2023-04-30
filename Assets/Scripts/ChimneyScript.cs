@@ -19,6 +19,7 @@ public class ChimneyScript : MonoBehaviour {
 
             var confetti = transform.Find("Confetti").GetComponent<ParticleSystem>();
             confetti.Play();
+            GetComponent<ChimneyAudioScript>().Deposit();
         }
     }
 }

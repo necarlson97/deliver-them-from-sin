@@ -14,6 +14,8 @@ public class CamScript : MonoBehaviour {
 
     public float ratio;
 
+    float fadeIn = .8f;
+
     void Start() {
         start = transform.localPosition;
         // startZoom = GetComponent<Camera>().orthographicSize;
@@ -26,6 +28,7 @@ public class CamScript : MonoBehaviour {
         CloseToStart();
         CloseToDemon();
         UpdateShake();
+        UpdateFade();
     }
 
     void PlayerSpeed() {
@@ -64,11 +67,9 @@ public class CamScript : MonoBehaviour {
         distance = distance / 40f;
         distance = Mathf.Min(1, Mathf.Max(0, distance));
         var sr = GetComponentInChildren<SpriteRenderer>();
-        var tmp = sr.color;
+        var tmp = Color.red;
         tmp.a = 1f - distance;
         sr.color = tmp;
-
-
     }
 
     float shakeTimer = 0;
@@ -81,5 +82,15 @@ public class CamScript : MonoBehaviour {
         shakeTimer -= Time.fixedDeltaTime;
         var shakeAmount = shakeTimer;
         transform.localPosition += Random.insideUnitSphere * shakeAmount;
+    }
+
+    void UpdateFade() {
+        if (fadeIn <0) return;
+        fadeIn -= Time.fixedDeltaTime;
+
+        var sr = GetComponentInChildren<SpriteRenderer>();
+        var tmp = Color.black;
+        tmp.a = fadeIn;
+        sr.color = tmp;
     }
 }

@@ -163,21 +163,33 @@ public class PlayerScript : MonoBehaviour {
     }
 
     float jumpTimer;
+    float jumpMax = 0.5f; // Time before a grounded player can jump again
     protected void UpdateJump(bool jumped) {
         // Check to see if the being wishes to jump,
         // and handle duplicate jumps, coyote jumps, etc
-        jumpTimer -= Time.deltaTime;
+        jumpTimer += Time.deltaTime;
         if (jumped && CanJump()) Jump();
     }
     void Jump() {
-        GetComponent<Rigidbody2D>().AddForce(transform.up * jumpForce);
-        jumpTimer = 1f; // Time before a grounded player can jump again
+        var rc = GetComponent<Rigidbody2D>();
+        // TODO was seeing some inconsistient behavior with sliding on ground
+        // does this help?
+        rc.velocity = new Vector2(rc.velocity.x, 0);
+
+        rc.AddForce(transform.up * jumpForce);
+
+        // Start wait time
+        jumpTimer = 0;
+
+        // If we were punching or sliding, stop
+        punchTimer = 0;
+        diveTimer = 0;
 
         GetComponent<Animator>().SetTrigger("Jump");
         GetComponent<PlayerAudioScript>().Jump();
     }
     public bool CanJump() {
-        return !IsPunching() && !IsDiving() && !InAir() && jumpTimer < 0.001f;
+        return !InAir() && jumpTimer > jumpMax;
     }
 
     float coyoteMax = 1f;
@@ -228,6 +240,7 @@ public class PlayerScript : MonoBehaviour {
         // SFX
         if (IsDiving()) GetComponent<PlayerAudioScript>().Dive();
         else if (IsPunching()) GetComponent<PlayerAudioScript>().Punch();
+        // else if (coyoteTimer > 6f) GetComponent<PlayerAudioScript>().Moan();
         else if (speedRatio > 0.8 && !InAir()) GetComponent<PlayerAudioScript>().Step();
 
         var speedText = transform.Find("Canvas/Speed Text");
@@ -299,7 +312,9 @@ public class PlayerScript : MonoBehaviour {
     }
 
     public void BrokeBox() {
-        // Can jump right after breaking boxes
+        // Can jump right after breaking boxes,
+        // as well as break more boxes
+        punched = false;
         coyoteTimer = - (punchMax - punchTimer) - 1f;
         boxesBroken++;
     }

@@ -18,11 +18,20 @@ public class BabyScript : MonoBehaviour {
 
         var ds = GameObject.FindObjectOfType<DemonScript>();
         ds.Awoken();
+        GetComponent<BabyAudioScript>().Pickup();
     }
 
     private void OnTriggerEnter2D(Collider2D other) {
         if (other.gameObject.name == "Player") {
             PickedUp(other.gameObject);
         }
+    }
+
+    public void DelayedWhine() {
+        Invoke("Whine", 1f);
+    }
+
+    public void Whine() {
+        GetComponent<BabyAudioScript>().Whine();
     }
 }

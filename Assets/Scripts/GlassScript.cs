@@ -15,6 +15,7 @@ public class GlassScript : MonoBehaviour {
 
         var ps = GetComponentInChildren<ParticleSystem>();
         ps.Play();
+        GetComponent<GlassAudioScript>().Broken();
     }
 
     private void OnTriggerEnter2D(Collider2D other) {

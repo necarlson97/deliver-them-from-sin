@@ -6,13 +6,14 @@ public class DemonScript : MonoBehaviour {
 
 
     float speed = 0;
-    float speedMax = 4.3f;
+    float speedMax = 4.35f;
 
     public void Awoken() {
         if (speed > 0) return;
         speed = speedMax;
-        var cs = GameObject.FindObjectOfType<CamScript>();
-        cs.Shake(1.5f);
+        GameObject.FindObjectOfType<CamScript>().Shake(1.5f);
+        GameObject.FindObjectOfType<PlayerAudioScript>().Alarm();
+        GameObject.FindObjectOfType<MusicScript>().Theme();
     }
 
     public void Stopped() {

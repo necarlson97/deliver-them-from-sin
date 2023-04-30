@@ -15,6 +15,7 @@ public class BoxScript : MonoBehaviour {
 
         var broken = GetComponentInChildren<ParticleSystem>();
         broken.Play();
+        GetComponent<BoxAudioScript>().Broken();
     }
 
     private void OnTriggerEnter2D(Collider2D other) {

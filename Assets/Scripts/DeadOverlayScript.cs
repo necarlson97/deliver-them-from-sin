@@ -16,7 +16,7 @@ public class DeadOverlayScript : MonoBehaviour {
         t.text = "Broken " + ps.windowsBroken + " boxes";
         t = transform.Find("canvas/Explored").GetComponent<Text>();
         var blockSize = 100;
-        var total = 2500/blockSize;
+        var total = 2600/blockSize;
         var explored = Mathf.Round(ps.transform.position.x / blockSize);
         t.text = "Explored " + explored + "/" + total + " city blocks";
     }

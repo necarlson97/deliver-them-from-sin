@@ -5,6 +5,6 @@ using UnityEngine;
 public class FollowPlayerScript : MonoBehaviour {
     void Update() {
         var ps = GameObject.FindObjectOfType<PlayerScript>();
-        transform.position = ps.transform.position;
+        transform.position = (Vector2) ps.transform.position;
     }
 }
